@@ -9,17 +9,18 @@ We wanted to be able to accomplish the following things:
 * Extract configuration from an API Management instance as far as possible, using the REST API and/or git Repository integration
 * Push configurations to other APIm instances, using both the REST API and the git repository.
 
-The python and shell scripts at hand can do these things, mostly using the git integration. They are intended for use in a Linux or Mac OS X environment; possibly they will work using git bash/cygwin on Windows, too, but that's not been thoroughly tested.
+The python scripts at hand can do these things, mostly using the git integration.
+
+**Discaimer**: The scripts were developed on Mac OS X, and will most likely work on Linux and Windows, too, but have not (yet) been tested todo so.
 
 ## Prerequisites
 
 In order to run the scripts, you will need the following prerequisites installed on your system:
 
-* sh (shell scripts)
 * Python 2.7.x
 * PIP
 * The Python `requests` library: [Installation Guide](http://docs.python-requests.org/en/master/user/install/)
-* The Python `gitpython' library: [Installation Guide](http://gitpython.readthedocs.org/en/stable/intro.html)
+* The Python `gitpython` library: [Installation Guide](http://gitpython.readthedocs.org/en/stable/intro.html)
 * git (available from the command line)
 
 ### On `pip` packaes
