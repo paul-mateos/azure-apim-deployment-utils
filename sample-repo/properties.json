@@ -1,0 +1,14 @@
+{
+    "SuperSecretValue": {
+        "secret": true, 
+        "value": "This is a jolly fine password.", 
+        "tags": [
+            "sometag"
+        ]
+    }, 
+    "NotSecretThing": {
+        "secret": false,
+        "value": "Nothing super important at all.",
+        "tags": ["sometag", "moretag"]
+    }
+}

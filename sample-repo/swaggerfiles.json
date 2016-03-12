@@ -1,0 +1,13 @@
+{
+    "swaggerFiles":
+    [
+        {
+            "serviceUrl": "https://v1.api1.domain.contoso.com",
+            "swagger": "$APIM_SWAGGER_API1"
+        },
+        {
+            "serviceUrl": "https://v1.api2.domain.contoso.com",
+            "swagger": "$APIM_SWAGGER_API2" 
+        }
+    ]
+}
