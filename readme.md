@@ -11,7 +11,77 @@ We wanted to be able to accomplish the following things:
 
 The python scripts at hand can do these things, mostly using the git integration.
 
-**Discaimer**: The scripts were developed on Mac OS X, and will most likely work on Linux and Windows, too, but have not (yet) been tested todo so.
+**Discaimer**: The scripts were developed on Mac OS X, and will most likely work on Linux and Windows, too, but have not (yet) been tested to do so.
+
+### How does this work?
+
+This is the principal idea how the scripts are intended to work:
+
+![Deployment Paths](doc/deployment_path.png)
+
+In this picture you see three (point being: two or more) different instances of API Management which reflect the different stages of development of your API Management solution.
+
+An Azure API Management instance configuration consists of a lot of information, of which most is retrievable using the [`git` integration](https://azure.microsoft.com/en-us/updates/manage-your-api-management-service-instances-by-using-git/), but not all information is contained in the repository. Namely the following things are not included:
+
+* Client Certificates for use for Mutual SSL connections to the backend
+* Properties for parametrizing policy definitions
+
+This means any deployment script needs to take care of these things in addition to just pushing the git configuration to a different instance. Fortunately, there is a REST API of Azure API Management which lets you do that, and this is also addressed by the scripts.
+
+Additionally, all CRM content is (unfortunately) not contained in the git repository, but that part is **not** covered by the scripts (as the content is not available "from the outside").
+
+#### What's in this package?
+
+To get the expectations straight for these scripts: The scripts are intended to **enable** you to do automatic deployments to and from Azure API Management instances, but they can only provide a means for you to do this. Depending on your deployment scenarios, you will need different lego bricks to build up your pipelines.
+
+In the following sections I will describe the deployment pipeline we have chosen you use, but your mileage may vary largely.
+
+In case you have use cases you think are missing/the scripts do not reflect this, please open an issue so that we can discuss possible solutions.
+
+#### Development principles
+
+...
+
+#### Development cycle
+
+...
+
+### Consequences of automation
+
+When deciding to automate the deployment of API definitions to Azure API Management, this will have some effects on how you need to design/implement policies. The following section describe some typical problems you encounter and the workarounds and/or patterns you can apply to achieve what you need.
+
+#### Making the service URL configurable
+
+A major pain point with the API definitions in Azure API Management is that it is not - out of the box - possible to parametrize the `serviceUrl` of an API (also known as the service backend URL). One would expect it to be possible to use a property to supply the URL, but unfortunately, this is not possible (using ``{{MyApiBackendUrl}}` is rejected for not being a proper URL).
+
+The workaround for this is to use the `<set-backend-service>` policy on an API level, and there make use of a property.
+
+**Example**:
+```xml
+<policies>
+	<inbound>
+		<base />
+		<set-backend-service base-url="{{MyApiBackendUrl}}" />
+	</inbound>
+	<backend>
+		<base />
+	</backend>
+	<outbound>
+		<base />
+	</outbound>
+	<on-error>
+		<base />
+	</on-error>
+</policies>
+```
+
+**Remember**: No hard coded URLs, user names and/or passwords inside your `git` repository, otherwise you'll be unhappy. All moving parts in certificates and properties only!
+
+#### Automated updates of API definitions via Swagger
+
+In order to update an API via its Swagger definition using the REST API (as opposed to the Web UI), it is necessary to know the *aid* (API ID) of the API to update. Finding this id is either a matter of pattern matching, or you need to define a unique ID which is both present in the APIm instance and on your own side.
+
+To solve this problem, the scripts at hand chose to "abuse" the `serviceUrl` (see also above) to map the API to a Swagger definition. See section on the [`swaggerfiles.json`](#swaggerfiles) configuration file properties. This issue is described in more depth there.
 
 ## Prerequisites
 
@@ -21,15 +91,15 @@ In order to run the scripts, you will need the following prerequisites installed
 * PIP
 * The Python `requests` library: [Installation Guide](http://docs.python-requests.org/en/master/user/install/)
 * The Python `gitpython` library: [Installation Guide](http://gitpython.readthedocs.org/en/stable/intro.html)
-* git (available from the command line)
+* `git` (available from the command line)
 
-### On `pip` packaes
+### On `pip` packages
 
 As I haven't been writing python scripts for more than a couple of days, I have not yet found out how to create my own "eggs" and/or `pip` packages/applications. This will hopefully follow in due time.
 
 # Usage
 
-The following sections describe the callable python scripts; I hope I will find time to describe the actual implementation in more detail, too, but for now, this will have to do.
+Depending on the script you are using, the deployment scripts expect information from files residing in the same directory (referred to as the *configuration directory*). 
 
 ## Configuration directory structure
 
@@ -52,6 +122,7 @@ To be written.
 
 To be written.
 
+<a name="swaggerfiles"></a>
 ### Config file `swaggerfiles.json`
 
 To be written.
