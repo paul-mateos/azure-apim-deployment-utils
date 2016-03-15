@@ -127,6 +127,10 @@ To be written.
 
 To be written.
 
+# Supported APIm operations
+
+The following sections describe the operations which are supported out of the box by the scripts, in easily useful ways. For further support, it is quite simple to extend the scripts and/or add more scripts to support more things. Most other things which are not covered here are though already available using the PowerShell Cmdlets (link needed).
+
 ## Updating an APIm instance
 
 ```
@@ -179,7 +183,7 @@ Creates `properties_extracted.json` into the *config dir*. Use this file to crea
 ### Opening Admin UI (without Azure Portal)
 
 ```
-$ python apim_open_adim_ui.py <config dir> [<instance>]
+$ python apim_open_apim_ui.py <config dir> [<instance>]
 ```
 
 Opens a web browser pointing to the Admin Portal of your Azure API Management instance, without going via the Azure Classic Portal. Useful.
