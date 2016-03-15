@@ -135,7 +135,7 @@ $ python apim_update.py <config dir>
 
 ...
 
-(This already works)
+(Works, needs to be described)
 
 ## Extracting a configuration ZIP file
 
@@ -144,13 +144,15 @@ $ python apim_extract.py <config dir> <target zip file>
 ```
 ...
 
-(This already works)
+(Works, needs to be described)
 
 ## Deploying a configuration ZIP file (to a different APIm instance)
 
 ```
 $ python apim_deploy.py <source config zip>
 ```
+
+(Works, needs to be described)
 
 Things which are confusing:
 
@@ -162,13 +164,33 @@ Things which are confusing:
 
 ### Special case deleted properties
 
-... can't be removed in the same step as they are removed from the policies. Two-step deployment (call it a bug of APIm if you want).
+... can't be removed in the same step as they are removed from the policies. Two-step deployment needed.
 
-## Extracting Properties
+## Utility functions
+
+### Extracting Properties
 
 ```
 $ python apim_extract_properties.py <config dir>
 ```
+
+Creates `properties_extracted.json` into the *config dir*. Use this file to create your configuration file if you want.
+
+### Opening Admin UI (without Azure Portal)
+
+```
+$ python apim_open_adim_ui.py <config dir> [<instance>]
+```
+
+Opens a web browser pointing to the Admin Portal of your Azure API Management instance, without going via the Azure Classic Portal. Useful.
+
+### Generate PFX/PKCS#12 Thumbprint from file
+
+```
+$ python apim_openssl.py <certificate.pfx> <password>
+```
+
+Outputs the PFX thumbprint of a certificate file; useful when scripting things. Use this in order to set environment variables which in turn can be used inside properties, e.g. when specifying which certificate should be used for mutual authentication scenarios.
 
 
 # Appendix
