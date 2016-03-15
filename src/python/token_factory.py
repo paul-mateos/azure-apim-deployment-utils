@@ -44,6 +44,18 @@ class TokenFactory:
 
         return urllib.quote_plus(self.get_sas_token_internal(git_data['id'], git_data['primaryKey']))
 
+    def get_admin_sso_link(self, instance):
+        rest_token = self.get_sas_token(instance)
+        
+        sso_res = requests.post(self.get_base_url(instance) + 'users/1/generateSsoUrl' + self.get_api_version(),
+                                headers = {'Authorization': rest_token})
+        if (200 != sso_res.status_code):
+            print "Could not create SSO URL for administrator."
+            print sso_res.text
+            raise RuntimeError("Could not create SSO URL for administrator")
+        
+        sso_json = byteify(json.loads(sso_res.text))
+        return sso_json['value']
 
     def get_base_url(self, instance):
         return self._instances[instance]["url"]

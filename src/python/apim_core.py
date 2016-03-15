@@ -6,7 +6,9 @@ import hashlib
 import random
 import token_factory
 import os
+import base64
 from utils import byteify, replace_env
+import apim_openssl
 
 def create_azure_apim(instances_file):
     tf = token_factory.create_token_factory_from_file(instances_file)
@@ -87,10 +89,10 @@ class AzureApim:
         base_url = self._token_factory.get_base_url(instance)
         api_version = self._token_factory.get_api_version()
         
-        md5_bucket = {}
+        sha1_bucket = {}
         for certificate_info in certificate_infos:
-            hex = self.__hexmd5(certificate_info['fileName'])
-            md5_bucket[hex] = certificate_info
+            fingerprint = apim_openssl.pkcs12_fingerprint(certificate_info['fileName'], certificate_info['password'])
+            sha1_bucket[fingerprint] = certificate_info
         
         certs_res = requests.get(base_url + 'certificates' + api_version, 
                                 headers = {'Authorization': sas_token})
@@ -98,36 +100,38 @@ class AzureApim:
             print certs_res.text
             return False
         
-        cid_bucket = {}
+        fingerprint_bucket = {}
         certs_json = byteify(json.loads(certs_res.text))
         for cert in certs_json['value']:
             print "Certificate: " + cert['id'] + ", " + cert[u'subject']
+            thumbprint = cert['thumbprint']
             cid_string = cert['id'] # /certificates/{unique id}
             cid = cid_string[cid_string.index('/', 2) + 1:] # /certificates/{unique id} -- pick unique id
             print "cid: " + cid
-            cid_bucket[cid] = True
+            fingerprint_bucket[thumbprint] = cid
 
-        print cid_bucket
+        print fingerprint_bucket
 
-        for cid in cid_bucket:
-            if not cid in md5_bucket:
-                print "Will delete cid '" + cid + "'"
+        for fingerprint in fingerprint_bucket:
+            if not fingerprint in sha1_bucket:
+                cid = fingerprint_bucket[fingerprint]
+                print "Will delete cert with fingerprint '" + fingerprint + "' (cid " + cid + ")."
                 if not self.__delete_certificate(base_url, sas_token, api_version, cid):
                     return False
                 print "Deleted cid '" + cid + "'."
         
-        for cert in md5_bucket:
-            if not cert in cid_bucket:
-                print "Will add cert '" + md5_bucket[cert]['fileName'] + "' (MD5 " + cert + ")"
-                if not self.__add_certificate(base_url, sas_token, api_version, md5_bucket[cert], cert):
+        for cert in sha1_bucket:
+            if not fingerprint in fingerprint_bucket:
+                print "Will add cert '" + sha1_bucket[cert]['fileName'] + "' (fingerprint " + cert + ")"
+                if not self.__add_certificate(base_url, sas_token, api_version, sha1_bucket[fingerprint], fingerprint):
                     return False
-                print "Added cert '" + md5_bucket[cert]['fileName'] + "'"
+                print "Added cert '" + sha1_bucket[fingerprint]['fileName'] + "'"
             else:
-                print "Found certificate with cid '" + cert + "'."
+                print "Found certificate with fingerprint '" + fingerprint + "'."
 
         return True
                 
-
+    def __delete_certificate(self, base_url, sas_token, api_version, cid):
         cert_del_res = requests.delete(base_url + 'certificates/' + cid + api_version,
                                     headers = {'Authorization': sas_token, 'If-Match': '*'})
         if (204 == cert_del_res.status_code
@@ -137,6 +141,25 @@ class AzureApim:
         print "Deletion of certificate failed!"
         print cert_del_res.text
         return False
+    
+    def __file_base64(self, file_name):
+        with open(file_name, 'rb') as in_file:
+            return base64.b64encode(in_file.read())
+        
+    def __add_certificate(self, base_url, sas_token, api_version, cert_info, fingerprint):
+        cid = '%030x' % random.randrange(16**30)
+        add_cert_body = {
+            'data': self.__file_base64(cert_info['fileName']),
+            'password': cert_info['password'] 
+        }
+        cert_add_res = requests.put(base_url + 'certificates/' + cid + api_version,
+                                    headers = {'Authorization': sas_token},
+                                    json = add_cert_body)
+        if (201 != cert_add_res.status_code):
+            print "Adding certificate failed!"
+            print cert_add_res.text
+            return False
+        return True
         
     def update_swagger_from_file(self, instance, swaggerfiles_file):
         with open(swaggerfiles_file, 'r') as json_file:
