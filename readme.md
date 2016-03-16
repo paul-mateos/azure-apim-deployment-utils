@@ -71,7 +71,15 @@ The scripts being implemented in more or less plain vanilla Pyton 2.7.x enables 
 
 ##### From the command line (developer tooling)
 
-...
+In some cases, the script may be useful simply for interacting with the Azure APIm instances, e.g. for [calling the Admin UI](#admin_ui) without havng to go via the Azure Portal, or doing manual extracts and deployments via the command line interface.
+
+These use cases and/this functionality is described in the [utilities](#utilities) section.
+
+##### As a base for other custom Python scripts
+
+Using the [apim_core](#apim_core) module, you can also create other functionality based on the `AzureApim` class; it helps you create SAS tokens and such which are always needed when communicating with the REST API.
+
+Also feel free to fork the repository and create pull requests in case you feel there is functionality which should be added.
 
 #### What's in this package?
 
@@ -174,12 +182,41 @@ You can find a sample configuration repository inside the `sample-repo` director
 * `properties.json`: Properties to update in the target APIm instances. See the file for the syntax. Properties can be used in most policy definitions to get a parametrized behaviour. Typical properties may be e.g. backend URLs (used in `set-backend-service` policies), user names or passwords.
 * `swaggerfiles.json`: Used when updating APIs via swagger files which are generated and/or supplied from a backend service deployment.
 
+<a name="env_variables"></a>
+##### Using environment variables
+
+In all configuration files, it is possible and advisable to make use of environment variables to inject information in the configuration files. Inside both properties (keys) and values, all strings starting with a dollar sign `$` are considered being environment variables. The environment variable reference is thus replaced with the content of the variable.
+
+This is an important concept when using the scripts inside build environments: This is how you introduce differences between instances (Dev, Test, ..., Prod). In build environments, it is normally possible to define a set of environment variables "from the outside", and via this mechanism use the very same ZIP file for deployment into multiple instances (which is the purpose of the ZIP file). 
+
 <a name="instances"></a>
 ### Config file `instances.json`
 
 A sample file can be found in the sample repository: [`instances.json`](sample-repo/instances.json).
 
-To be written.
+```json
+{
+    "apim": {
+        "id": "$APIM_ID",
+        "key": "$APIM_PRIMARY_KEY",
+        "url": "$APIM_MGMT_URL",
+        "scm": "$APIM_SCM_HOST",
+        "host": "$APIM_GATEWAY_HOST"
+    }
+}
+```
+
+Inside the `instances.json` file you describe the Azure APIm instance you want to interact with using the scripts. These values can be found in the Azure APIm Admin UI, under "Security", and "API Management REST API". The check box "Enable API Management REST API" must be checked, which in turn shows the `id` ("Identifier") and an access key ("Primary Key" or "Secondary Key", both work), which has to be put in as `key`.
+
+The property `url` has to provide the Management API URL, which is also stated on that page, under "Management API URL". If your APIm instance is called `myapim`, this will be `https://myapim.management.azure-api.net`.
+
+As for the property `scm`, this has to point to the `git` repository of your API Management instance. If your APIm instance is called `myapim`, this will be `https://myapim.scm.azure-api.net`.
+
+The last property, `host`, needs to point to the host name of your APIm Gateway (**not** the portal, the **Gateway**). If you have not customized this, this will be (using the same sample name as above) `https://myapim.azure-api.net`. If you have provided a custom domain for your API Gateway, supply the custom DNS entry here (as configured in the Azure Portal).
+
+Note the use of [environment variables](#env_variables), which is not mandatory, but advisable.
+
+The `instances.json` file is **mandatory**; without it, the scripts will not be able to resolve the target APIm instance.
 
 <a name="certificates"></a>
 ### Config file `certificates.json`
@@ -188,19 +225,21 @@ A sample file can be found in the sample repository: [`certificates.json`](sampl
 
 To be written.
 
+The `certificates.json` file is **optional**. Without it, `apim_update` will not alter your certificate settings. Having an *empty* file will delete any certificates in your instance.
+
 <a name="properties"></a>
 ### Config file `properties.json`
 
 A sample file can be found in the sample repository: [`properties.json`](sample-repo/properties.json).
 
-To be written.
+The `certificates.json` file is **optional**. Without it, `apim_update` will not alter your certificate settings. Having an *empty* file will delete any certificates in your instance.
 
 <a name="swaggerfiles"></a>
 ### Config file `swaggerfiles.json`
 
 A sample file can be found in the sample repository: [`swaggerfiles.json`](sample-repo/swaggerfiles.json).
 
-To be written.
+The `swaggerfiles.json` file is **optional**; without it, `apim_update` will not update an APIs. Please note that the *absence* of this file or an entry into the file will **not** result in APIs being deleted from the updated instance. If you need to delete an API, you will have to do that either using the REST API directly and/or using PowerShell Cmdlets, or directly from the Admin UI.
 
 # Supported APIm operations
 
@@ -245,6 +284,7 @@ Things which are confusing:
 
 ... can't be removed in the same step as they are removed from the policies. Two-step deployment needed.
 
+<a name="utilities"></a>
 ## Utility functions
 
 ### Extracting Properties
@@ -255,6 +295,7 @@ $ python apim_extract_properties.py <config dir>
 
 Creates `properties_extracted.json` into the *config dir*. Use this file to create your configuration file if you want.
 
+<a name="admin_ui"></a>
 ### Opening Admin UI (without Azure Portal)
 
 ```
