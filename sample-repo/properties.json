@@ -1,14 +1,23 @@
 {
-    "SuperSecretValue": {
-        "secret": true, 
-        "value": "This is a jolly fine password.", 
+    "BackendServiceUrl1": {
+        "secret": false, 
+        "value": "$APIM_BACKEND_1", 
         "tags": [
             "sometag"
         ]
     }, 
-    "NotSecretThing": {
-        "secret": false,
-        "value": "Nothing super important at all.",
-        "tags": ["sometag", "moretag"]
+    "BackendServiceUrl2": {
+        "secret": false, 
+        "value": "$APIM_BACKEND_2", 
+        "tags": [
+            "othertag"
+        ]
+    },
+    "BackendClientCert": {
+        "secret": true,
+        "value": "$APIM_CERT_THUMBPRINT",
+        "tags": [
+            "certificate"
+        ]
     }
 }

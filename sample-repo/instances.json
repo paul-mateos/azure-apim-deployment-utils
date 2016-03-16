@@ -3,6 +3,7 @@
         "id": "$APIM_ID",
         "key": "$APIM_PRIMARY_KEY",
         "url": "$APIM_MGMT_URL",
-        "scm": "$APIM_SCM_HOST"
+        "scm": "$APIM_SCM_HOST",
+        "host": "$APIM_GATEWAY_HOST"
     }
 }
