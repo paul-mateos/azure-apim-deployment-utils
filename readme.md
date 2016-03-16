@@ -174,6 +174,7 @@ As I haven't been writing python scripts for more than a couple of days, I have 
 
 Depending on the script you are using, the deployment scripts expect information from files residing in the same directory (referred to as the *configuration directory*). 
 
+<a name="config_file"></a>
 ## Configuration directory structure
 
 You can find a sample configuration repository inside the `sample-repo` directory. The following files are considered when dealing with an Azure API Management configuration:
@@ -309,10 +310,25 @@ The following sections describe the operations which are supported out of the bo
 $ python apim_update.py <config dir>
 ```
 
-...
+The parameter `<config dir>` must point to directory containing configuration files as described in the [above sections](#config_file).
 
-(Works, needs to be described)
+The `apim_update` script updates a (developer) instance of Azure API Management. The script will perform the following steps (in the given order):
 
+1. Properties are updated according to the [`properties.json`](#properties) configuration file.
+1. Certificates are updated according to the [`certificates.json`](#certificates) configuration file.
+1. API definitions are updated according to the [`swaggerfiles.json`](#swaggerfiles) configuration file.
+
+Please note that this scripts uses only the REST API of the APIm instance to perform these updates.
+
+##### Intended use of `apim_update`
+
+The script `apim_update` is intended for use after a backend service has been deployed and after it has possibly updated its Swagger definition file. The deployment step of the backend service should automatically trigger an update of the APIm instance via this script. This should be done **automatically**, otherwise you may be at risk of forgetting to update the API definition.
+
+It is advisable to subsequently do an [`apim_extract`](#apim_extract) to encapsulate the state of your APIm instance after the update. This ensures you can push this configuration to other (downstream) APIm instances, like Test, or Prod.
+
+**Note**: The scripts assume you know what you are doing in terms of compatible changes of your API (evolvability, version compatibility). For guidelines on how to accomplish this, please refer to API Styleguides, for example the [Haufe-Lexware API Styleguide](http://dev.haufe-lexware.com/resources/).
+
+<a name="apim_extract"></a>
 ## Extracting a configuration ZIP file
 
 ```
@@ -321,6 +337,8 @@ $ python apim_extract.py <config dir> <target zip file>
 ...
 
 (Works, needs to be described)
+
+
 
 ## Deploying a configuration ZIP file (to a different APIm instance)
 
