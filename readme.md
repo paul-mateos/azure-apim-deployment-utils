@@ -26,6 +26,13 @@ The documentation consists of two parts (and a planned one):
 
 # Getting started
 
+In order to get started with the scripts, please first make sure you meet the [prerequisites](#prereqs). Alternatively you can [run the scripts using `docker`](#docker).
+
+WIP.
+
+<a name="docker"></a>
+## Run using `docker`
+
 WIP.
 
 # Behind the scenes
@@ -156,6 +163,7 @@ In order to update an API via its Swagger definition using the REST API (as oppo
 
 To solve this problem, the scripts at hand chose to "abuse" the `serviceUrl` (see also above) to map the API to a Swagger definition. See section on the [`swaggerfiles.json`](#swaggerfiles) configuration file properties. This issue is described in more depth there.
 
+<a name="prereqs"></a>
 ## Prerequisites
 
 In order to run the scripts, you will need the following prerequisites installed on your system:
@@ -251,7 +259,44 @@ The `certificates.json` file is **optional**. Without it, `apim_update` will not
 
 A sample file can be found in the sample repository: [`properties.json`](sample-repo/properties.json).
 
-The `certificates.json` file is **optional**. Without it, `apim_update` will not alter your certificate settings. Having an *empty* file will delete any certificates in your instance.
+```json
+{
+    "BackendServiceUrl1": {
+        "secret": false, 
+        "value": "$APIM_BACKEND_1", 
+        "tags": [
+            "sometag"
+        ]
+    }, 
+    "BackendServiceUrl2": {
+        "secret": false, 
+        "value": "$APIM_BACKEND_2", 
+        "tags": []
+    },
+    "BackendClientCert": {
+        "secret": true,
+        "value": "$APIM_CERT_THUMBPRINT",
+        "tags": [
+            "certificate"
+        ]
+    }
+}
+```
+
+The `properties.json` file contains a dictionary of properties, which each contain the following sub properties:
+
+* `secret`: Is the property containing a secret/credential? If so, this means that it will not be displayed in the Admin UI. Defaults to `false`
+* `value`: The value of the property; usually, this will be retrieved from an [environment variable](#env_variables) (see there for a discussion on usage); it may also be clear text.
+* `tags`: Contains a (possibly empty) list of tags to associate with the property; this is only used for display purposes in the Azure APIm Admin UI and has no further impact on functionality.
+
+The intended use of properties are for example the following:
+
+* Setting behavioral switches, such as enabling or disabling logging
+* Providing credentials to logging facilities, such as Azure Event Hubs
+* Setting backend service URLs (albeit using the [`set-backend-url`](#service_url) policy)
+* Other properties controlling instance specific things (please let me know if you have other use cases, I will add them here)
+
+The `properties.json` file is **optional**. Without it, `apim_update` will not alter your properties settings. Having an *empty* file will delete any properties previously present in your instance.
 
 <a name="swaggerfiles"></a>
 ### Config file `swaggerfiles.json`
