@@ -53,6 +53,8 @@ Additionally, all CRM content is (unfortunately) not contained in the git reposi
 
 #### From where do you typically use these scripts? (Use Cases)
 
+##### Build environments
+
 These deployment utility scripts are typically used within Build definitions, using some kind of build management tool. The only requirement on such a tool is that they must be able to trigger python scripts. Typical build tools are:
 
 * [Team Foundation Build Service](https://msdn.microsoft.com/en-us/library/vs/alm/build/feature-overview)
@@ -66,6 +68,10 @@ The scripts being implemented in more or less plain vanilla Pyton 2.7.x enables 
 * We at Haufe are using go.cd for automating builds. More information on this integration may follow in the future.
 * This repository does (currently) **not** contain anything specific to a special build environment
 * All parameters are assumed to be stored as environment variables, which is something all build environments tend to support quite easily out of the box. 
+
+##### From the command line (developer tooling)
+
+...
 
 #### What's in this package?
 
