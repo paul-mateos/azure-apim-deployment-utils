@@ -122,6 +122,7 @@ The difference between the deployments to the different APIm instances should id
 
 When deciding to automate the deployment of API definitions to Azure API Management, this will have some effects on how you need to design/implement policies. The following section describe some typical problems you encounter and the workarounds and/or patterns you can apply to achieve what you need.
 
+<a name="service_url"></a>
 #### Making the service URL configurable
 
 A major pain point with the API definitions in Azure API Management is that it is not - out of the box - possible to parametrize the `serviceUrl` of an API (also known as the service backend URL). One would expect it to be possible to use a property to supply the URL, but unfortunately, this is not possible (using ``{{MyApiBackendUrl}}` is rejected for not being a proper URL).
@@ -223,7 +224,24 @@ The `instances.json` file is **mandatory**; without it, the scripts will not be 
 
 A sample file can be found in the sample repository: [`certificates.json`](sample-repo/certificates.json).
 
-To be written.
+```json
+{
+    "certificates": [
+        {
+            "fileName": "$APIM_CLIENT_CERT_PFX",
+            "password": "$APIM_CLIENT_CERT_PASSWORD"
+        }
+    ]
+}
+```
+
+In this file, you can provide client certificates which are to be used for communicating with your backend services (mutual SSL). You may provide a list of JSON objects, each containing a (preferably fully qualified) filename (`fileName`) pointing to a PFX file, and the corresponding password (`password`).
+
+This file is used in conjunction with the [`apim_update`](#apim_update) and [`apim_deploy`](#apim_deploy) scripts.
+
+The scripts will compare the SHA1 fingerprints of the certificates present in the target APIm instance with what's inside the `certificates.json` file. If new certificates are detected, they will be inserted. If "unknown" certificates are found in the APIm instance, these certificates will be delete. The mechanism relies on the SHA1 fingerprint of the certificates to be unique.
+
+When using this mechanism in conjunction with `apim_update` and/or `apim_deploy`, you will want to retrieve the PFX files and the corresponding passwords from a secure storage and pass in the location to the file via [environment variables](#env_variables), as is suggested in the sample above, too. **Note**: The secure storage/credential vault is **not** part of this script distribution.
 
 The `certificates.json` file is **optional**. Without it, `apim_update` will not alter your certificate settings. Having an *empty* file will delete any certificates in your instance.
 
@@ -239,7 +257,47 @@ The `certificates.json` file is **optional**. Without it, `apim_update` will not
 
 A sample file can be found in the sample repository: [`swaggerfiles.json`](sample-repo/swaggerfiles.json).
 
+```json
+{
+    "swaggerFiles":
+    [
+        {
+            "serviceUrl": "https://v1.api1.domain.contoso.com",
+            "swagger": "$APIM_SWAGGER_API1"
+        },
+        {
+            "serviceUrl": "https://v1.api2.domain.contoso.com",
+            "swagger": "$APIM_SWAGGER_API2" 
+        }
+    ]
+}
+```
+
+The `swaggerfiles.json` is used by the `apim_update` script to update a list of APIs using their Swagger definitions.
+
+This functionality is intended to be used after you have deployed your backend service to your Dev instances; the deployment scripts of your backend service (which in turn should supply the Swagger files) should trigger the `apim_update` script, which updates the API in your Dev APIm instance using the Swagger files.
+
+Due to the fact that Azure APIm does not let us specify the service URL (`serviceUrl`) of an API using properties, which in turn could be used to uniquely identify an API, using these scripts require us to workaround this a little:
+
+* In order to make the backend service URL configurable, you must use the [`<set-backend-url>` policy](#service_url)
+* **Instead, we are using the `serviceUrl`, or "Web Service URL" (in the Admin UI) as an identifier of the API**
+
+**Example**: APIs should be configured in such a way that the "Web Service URL" contains a URI-type identifier which - on a meta level - describes the service which lies behind the API:
+
+![Using the serviceUrl as a unique identifier](doc/api_service_url.png)
+
+A naming schema for this may for example be: `https://<version>.<service name>.<yourcompany>.<tld>`, such as here `https://v1.service.contoso.com`. This is obviously a **fictional** URL which does not actually lead to the backend service. The backend URL is instead stored in a [suitable property](#properties) and used in a [`<set-backend-url>` policy](#service_url)
+
+This is an ugly workaround for not being able to use a property in the `serviceUrl`. As soon as this limitation is lifted in Azure APIm, the `<set-backend-url>` policies can be removed, when using a property for the "Web Service URL".
+
 The `swaggerfiles.json` file is **optional**; without it, `apim_update` will not update an APIs. Please note that the *absence* of this file or an entry into the file will **not** result in APIs being deleted from the updated instance. If you need to delete an API, you will have to do that either using the REST API directly and/or using PowerShell Cmdlets, or directly from the Admin UI.
+
+##### Swagger import - Known problems
+
+This section of the script implementation has the following known problems (as of March 16th 2016):
+
+* **Do not use response or body schemas in your Swagger files**: If you use schema definitions using the `$ref` notation inside your Swagger files, these kinds of Swagger files will indeed *import* without error messages, but will not be able to *extract* and *deploy*  such APIs to other instances. This has the following background: The Swagger schema definitions are imported into your APIm instances and are also referenced in the API configuration files you can retrieve via git. But: The schema definitions themselves are **not** part of the git repository. This has the result that the `git` deployment fails due to missing schema definition references. The workaround for now is: Don't use schemas. **The APIm team knows of this and are currently working on a solution.**
+* All other Swagger restriction described in the Azure APIm documentation
 
 # Supported APIm operations
 
@@ -276,11 +334,11 @@ Things which are confusing:
 
 * The entire configuration is taken from the ZIP file, also the `instances.json`; normally you would parametrize this using environment variables, and via that be able to deploy to a different instance.
 
-### Special case deleted 'loggers'
+##### Special case deleted 'loggers'
 
 ... can't be removed in the same step as they are removed from the policies. Two-step deployment (call it a bug of APIm if you want).
 
-### Special case deleted properties
+##### Special case deleted properties
 
 ... can't be removed in the same step as they are removed from the policies. Two-step deployment needed.
 
