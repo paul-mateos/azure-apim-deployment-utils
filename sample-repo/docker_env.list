@@ -1,0 +1,21 @@
+# The list of environment variables for use in the container
+
+# For instances.json
+APIM_ID
+APIM_PRIMARY_KEY
+APIM_MGMT_URL
+APIM_SCM_HOST
+APIM_GATEWAY_HOST
+
+# For certificates.json
+APIM_CLIENT_CERT_PFX
+APIM_CLIENT_CERT_PASSWORD
+
+# For properties.json
+APIM_CERT_THUMBPRINT
+APIM_BACKEND_1
+APIM_BACKEND_2
+
+# For swaggerfiles.json
+APIM_SWAGGER_API1
+APIM_SWAGGER_API1

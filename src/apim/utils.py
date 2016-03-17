@@ -24,3 +24,13 @@ def replace_env(input):
         return input
     else:
         return input
+
+def resolve_file(file_name, base_dir):
+    if (os.path.isfile(file_name)):
+        return file_name
+    
+    joint = os.path.join(base_dir, file_name)
+    if (os.path.isfile(joint)):
+        return joint
+        
+    raise Exception("File not found: " + file_name)

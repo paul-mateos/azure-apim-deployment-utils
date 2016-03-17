@@ -7,16 +7,22 @@ import random
 import token_factory
 import os
 import base64
-from utils import byteify, replace_env
+from utils import byteify, replace_env, resolve_file
 import apim_openssl
 
-def create_azure_apim(instances_file):
-    tf = token_factory.create_token_factory_from_file(instances_file)
-    return AzureApim(tf)
+def create_azure_apim(config_dir):
+    instances_json = os.path.join(config_dir, 'instances.json')
+    if not os.path.isfile(instances_json):
+        print "*** ERROR"
+        raise Exception("Could not find 'instances.json' in '" + config_dir + "'.")
+        
+    tf = token_factory.create_token_factory_from_file(instances_json)
+    return AzureApim(tf, config_dir)
 
 class AzureApim:
-    def __init__(self, token_factory):
+    def __init__(self, token_factory, config_dir):
         self._token_factory = token_factory
+        self._base_config_dir = config_dir
         
     def git_save(self, instance, target_branch):
         return self.exec_async_operation(instance, 'tenant/configuration/save',
@@ -79,7 +85,7 @@ class AzureApim:
         return True
 
     def upsert_certificates_from_file(self, instance, certificates_file):
-        with open(certificates_file, 'r') as json_file:
+        with open(self.__resolve_file(certificates_file), 'r') as json_file:
             json_certificates = replace_env(byteify(json.loads(json_file.read())))
         return self.upsert_certificates(instance, json_certificates['certificates'])
         
@@ -91,7 +97,7 @@ class AzureApim:
         
         sha1_bucket = {}
         for certificate_info in certificate_infos:
-            fingerprint = apim_openssl.pkcs12_fingerprint(certificate_info['fileName'], certificate_info['password'])
+            fingerprint = apim_openssl.pkcs12_fingerprint_local(certificate_info['fileName'], certificate_info['password'], self._base_config_dir)
             sha1_bucket[fingerprint] = certificate_info
         
         certs_res = requests.get(base_url + 'certificates' + api_version, 
@@ -143,7 +149,7 @@ class AzureApim:
         return False
     
     def __file_base64(self, file_name):
-        with open(file_name, 'rb') as in_file:
+        with open(self.__resolve_file(file_name), 'rb') as in_file:
             return base64.b64encode(in_file.read())
         
     def __add_certificate(self, base_url, sas_token, api_version, cert_info, fingerprint):
@@ -223,7 +229,7 @@ class AzureApim:
         return True
         
     def __load_swagger(self, instance, swagger_file):
-        with open(swagger_file, 'r') as json_file:
+        with open(self.__resolve_file(swagger_file), 'r') as json_file:
             swagger_json = byteify(json.loads(json_file.read()))
 
         # Mandatory for importing swagger            
@@ -301,7 +307,7 @@ class AzureApim:
         return True
 
     def upsert_properties_from_file(self, instance, properties_file):
-        with open(properties_file, 'r') as json_file:
+        with open(self.__resolve_file(properties_file), 'r') as json_file:
             json_properties = replace_env(byteify(json.loads(json_file.read())))
         return self.upsert_properties(instance, json_properties)
 
@@ -391,9 +397,12 @@ class AzureApim:
         print "Successfully deleted property '" + prop_name + "' (id " + prop_id + ")."
         return True
 
-    def __hexmd5(self, fileName):
+    def __hexmd5(self, file_name):
         hasher = hashlib.md5()
-        with open(fileName, 'rb') as afile:
+        with open(self.__resolve_file(file_name), 'rb') as afile:
             buf = afile.read()
             hasher.update(buf)
         return hasher.hexdigest()
+
+    def __resolve_file(self, file_name):
+        return resolve_file(file_name, self._base_config_dir)

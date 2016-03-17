@@ -10,12 +10,7 @@ def apim_update(base_dir):
         base_dir = base_dir + os.sep
     print "Checking configuration..."
 
-    instances_json = os.path.join(base_dir, 'instances.json')
-    if not os.path.isfile(instances_json):
-        print "Could not find 'instances.json'"
-        return False
-        
-    apim = apim_core.create_azure_apim(instances_json)
+    apim = apim_core.create_azure_apim(base_dir)
     instance = 'apim'
 
     # Check for properties
@@ -61,11 +56,6 @@ def apim_extract(base_dir, target_zip):
 
     print "Checking configuration..."
 
-    instances_json = base_dir + 'instances.json'
-    if not os.path.isfile(instances_json):
-        print "Could not find 'instances.json'"
-        return False
-
     config_files = [
         'instances.json',
         'properties.json',
@@ -75,7 +65,7 @@ def apim_extract(base_dir, target_zip):
 
     instance = "apim"
 
-    apim = apim_core.create_azure_apim(instances_json)
+    apim = apim_core.create_azure_apim(base_dir)
     print "Telling APIm to store configuration to git..."
     if not apim.git_save(instance, 'master'):
         print "Failed."
@@ -118,15 +108,10 @@ def apim_extract_properties(base_dir):
         base_dir = base_dir + os.sep
         
     print "Checking configuration..."
-
-    instances_json = base_dir + 'instances.json'
-    if not os.path.isfile(instances_json):
-        print "Could not find 'instances.json'"
-        return False
     
     instance = "apim"
 
-    apim = apim_core.create_azure_apim(instances_json)
+    apim = apim_core.create_azure_apim(base_dir)
     properties_file = os.path.join(base_dir, 'properties_extracted.json')
     
     print "Extracting properties to 'properties_extracted.json'"
@@ -156,12 +141,6 @@ def apim_deploy(source_zip):
             zip_file.extractall(config_tmp)
         finally:
             zip_file.close()
-
-        # Check sanity of config dir
-        instances_json = os.path.join(config_tmp, 'instances.json')
-        if not os.path.isfile(instances_json):
-            print "Could not find 'instances.json'"
-            return False
         
         # Do an apim_update on the extracted files
         # Remove swaggerfiles.json; we don't want to do a Swagger update again
@@ -174,7 +153,7 @@ def apim_deploy(source_zip):
         # Save current config to git
         instance = "apim"
 
-        apim = apim_core.create_azure_apim(instances_json)
+        apim = apim_core.create_azure_apim(config_tmp)
         print "Telling APIm to store configuration to git..."
         if not apim.git_save(instance, 'master'):
             print "Failed."
