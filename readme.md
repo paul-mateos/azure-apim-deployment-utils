@@ -26,9 +26,7 @@ The documentation consists of two parts (and a planned one):
 
 # Getting started
 
-In order to get started with the scripts, please first make sure you meet the [prerequisites](#prereqs). Alternatively you can [run the scripts using `docker`](#docker).
-
-WIP.
+In order to get started with the scripts, please first make sure you meet the [prerequisites](#prereqs). You can either [run the scripts using `docker`](#docker), or run them directly using your local Python interpreter. Using the docker image ensures that it will always work, disregarding of your operating system, so for running the scripts, docker is the recommended way.
 
 <a name="docker"></a>
 ## Run using `docker`
@@ -166,6 +164,15 @@ To solve this problem, the scripts at hand chose to "abuse" the `serviceUrl` (se
 <a name="prereqs"></a>
 ## Prerequisites
 
+#### Running using `docker`
+
+In order to run the scripts using `docker`, you will only need the following:
+
+* A working `docker` host installation (1.10.3+),
+* A `docker` command line interface, such as the "Docker Toolbox" for Windows or Mac OS X, or an actual Linux docker host.
+
+#### Running using a local Python installation
+
 In order to run the scripts, you will need the following prerequisites installed on your system:
 
 * Python 2.7.x
@@ -174,9 +181,6 @@ In order to run the scripts, you will need the following prerequisites installed
 * The Python `gitpython` library: [Installation Guide](http://gitpython.readthedocs.org/en/stable/intro.html)
 * `git` (available from the command line)
 
-### On `pip` packages
-
-As I haven't been writing python scripts for more than a couple of days, I have not yet found out how to create my own "eggs" and/or `pip` packages/applications. This will hopefully follow in due time.
 
 # Usage
 
@@ -187,10 +191,11 @@ Depending on the script you are using, the deployment scripts expect information
 
 You can find a sample configuration repository inside the `sample-repo` directory. The following files are considered when dealing with an Azure API Management configuration:
 
-* `instances.json`: A file containing the `id`, `primaryKey` and other information on the Azure APIm instance to work with. It makes sense to get this information from environment variables, e.g. for use with build environments (which can pass information via environment variables).
-* `certificates.json`: This file contains the certificates meta information which gives information on which certificates for use as client certificates when calling backend service are to be used. These certificates are subsequently to be used in authentication policies. See the sample file for a description of the file format.
-* `properties.json`: Properties to update in the target APIm instances. See the file for the syntax. Properties can be used in most policy definitions to get a parametrized behaviour. Typical properties may be e.g. backend URLs (used in `set-backend-service` policies), user names or passwords.
-* `swaggerfiles.json`: Used when updating APIs via swagger files which are generated and/or supplied from a backend service deployment.
+* [`instances.json`](#instances): A file containing the `id`, `primaryKey` and other information on the Azure APIm instance to work with. It makes sense to get this information from environment variables, e.g. for use with build environments (which can pass information via environment variables).
+* [`certificates.json`](#certificates): This file contains the certificates meta information which gives information on which certificates for use as client certificates when calling backend service are to be used. These certificates are subsequently to be used in authentication policies. See the sample file for a description of the file format.
+* [`properties.json`](#properties): Properties to update in the target APIm instances. See the file for the syntax. Properties can be used in most policy definitions to get a parametrized behaviour. Typical properties may be e.g. backend URLs (used in `set-backend-service` policies), user names or passwords.
+* [`swaggerfiles.json`](#swaggerfiles): Used when updating APIs via swagger files which are generated and/or supplied from a backend service deployment.
+* [`docker_env.list`](#docker_env): A list of all [environment variables](#env_variables) used in all of the configuration files. This is used when passing environment variables from the `docker` host to the container.
 
 <a name="env_variables"></a>
 ##### Using environment variables
@@ -345,14 +350,54 @@ This section of the script implementation has the following known problems (as o
 * **Do not use response or body schemas in your Swagger files**: If you use schema definitions using the `$ref` notation inside your Swagger files, these kinds of Swagger files will indeed *import* without error messages, but will not be able to *extract* and *deploy*  such APIs to other instances. This has the following background: The Swagger schema definitions are imported into your APIm instances and are also referenced in the API configuration files you can retrieve via git. But: The schema definitions themselves are **not** part of the git repository. This has the result that the `git` deployment fails due to missing schema definition references. The workaround for now is: Don't use schemas. **The APIm team knows of this and are currently working on a solution.**
 * All other Swagger restriction described in the Azure APIm documentation
 
+<a name="docker_env"></a>
+### Config file `docker_env.list`
+
+This file is only important when using the `docker` image to run the scripts. When dealing with build environments which use docker images to build things, the build agent itself (=the docker host) will get passed environment variables. These environment variables are (by docker default) **not** propagated to the containers actually running the scripts.
+
+By using the `--env-file=<env var list>` command line switch of the `docker run` command, you can pass on a list of environment variables into the container; by simply stating the names of the environment variables in a list file, `docker run` will automatically pass through the value of the environment variable to the container.
+
+Example file content:
+```
+# The list of environment variables for use in the container
+
+# For instances.json
+APIM_ID
+APIM_PRIMARY_KEY
+APIM_MGMT_URL
+APIM_SCM_HOST
+APIM_GATEWAY_HOST
+
+# For certificates.json
+APIM_CLIENT_CERT_PFX
+APIM_CLIENT_CERT_PASSWORD
+
+# For properties.json
+APIM_CERT_THUMBPRINT
+APIM_BACKEND_1
+APIM_BACKEND_2
+
+# For swaggerfiles.json
+APIM_SWAGGER_API1
+APIM_SWAGGER_API1
+```
+
+A sample file can be found in the [sample config repository](sample-repo/docker_env.list).
+
 # Supported APIm operations
 
 The following sections describe the operations which are supported out of the box by the scripts, in easily useful ways. For further support, it is quite simple to extend the scripts and/or add more scripts to support more things. Most other things which are not covered here are though already available using the PowerShell Cmdlets (link needed).
 
 ## Updating an APIm instance
 
+Using Python directly:
 ```
 $ python apim_update.py <config dir>
+```
+
+Using `docker`:
+```
+$ docker run -it -v <config dir>:/apim --env-file=<env list file> donmartin76/azure-apim-deployment-utils update
 ```
 
 The parameter `<config dir>` must point to directory containing configuration files as described in the [above sections](#config_file).
@@ -376,14 +421,15 @@ It is advisable to subsequently do an [`apim_extract`](#apim_extract) to encapsu
 <a name="apim_extract"></a>
 ## Extracting a configuration ZIP file
 
+Using Python directly:
 ```
 $ python apim_extract.py <config dir> <target zip file>
 ```
-...
 
-(Works, needs to be described)
-
-
+Using `docker`:
+```
+$ docker run -it -v <config dir>:/apim --env-file=<env list file> donmartin76/azure-apim-deployment-utils extract [target zip file]
+```
 
 ## Deploying a configuration ZIP file (to a different APIm instance)
 
