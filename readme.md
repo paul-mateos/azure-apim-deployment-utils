@@ -124,7 +124,7 @@ $ docker run -it -v <path to config dir>:/apim donmartin76/azure-apim-deployment
 
 If everything goes well, you will get an output similar to this:
 ```
-$ docker run -it -v /Users/martind/Projects/tmp/apim2:/apim -e http_proxy=http://10.12.1.236:8083 -e https_proxy=https://10.12.1.236:8083 donmartin76/azure-apim-deployment-utils update
+$ docker run -it -v /Users/martind/Projects/tmp/apim2:/apim donmartin76/azure-apim-deployment-utils update
 ========================
  UPDATING APIM INSTANCE
 ========================
