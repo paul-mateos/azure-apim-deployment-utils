@@ -14,8 +14,6 @@ We wanted to be able to accomplish the following things:
 
 The python scripts at hand can do these things, mostly using the git integration, and the rest using the REST API (no pun intended).
 
-**Discaimer**: The scripts were developed on Mac OS X, and will most likely work on Linux and Windows, too, but have not (yet) been tested to do so.
-
 #### Documentation Contents
 
 The documentation consists of two parts (and a planned one): 
@@ -161,13 +159,13 @@ Using the Python interpreter locally works equally well, as long as the prerequi
 Instead of doing a `docker ... extract_config`, in the directory containing the `.py` files, issue the following command:
 
 ```
-C:\Projects\azure-apim-deployment-tools\> python.exe apim_extract_config.py <config dir> all
+C:\Projects\azure-apim-deployment-utils\> python.exe apim_extract_config.py <config dir> all
 ```
 
 Likewise, the update command works in the same way:
 
 ```
-C:\Projects\azure-apim-deployment-tools\> python.exe apim_update.py <config dir>
+C:\Projects\azure-apim-deployment-utils\> python.exe apim_update.py <config dir>
 ```
 
 # Behind the scenes
@@ -497,8 +495,8 @@ This section of the script implementation has the following known problems (as o
 This file is only important when using the `docker` image to run the scripts. When dealing with build environments which use docker images to build things, the build agent itself (=the docker host) will get passed environment variables. These environment variables are (by docker default) **not** propagated to the containers actually running the scripts.
 
 By using the `--env-file=<env var list>` command line switch of the `docker run` command, you can pass on a list of environment variables into the container; by simply stating the names of the environment variables in a list file, `docker run` will automatically pass through the value of the environment variable to the container.
-
 Example file content:
+
 ```
 # The list of environment variables for use in the container
 
