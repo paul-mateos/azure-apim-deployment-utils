@@ -1,3 +1,10 @@
+REM For Windows
+
+REM You can use such a BAT file in order to set your environment variables
+REM to suitable values for local testing. In Build server environments, the
+REM build agents usually get those env variables set by the Build server,
+REM but for local testing, this file can be convenient.
+
 REM For instances.json
 set APIM_ID=acbdbf783478db83bdface883
 set APIM_PRIMARY_KEY=VGhpcyBpcyBqdXN0IGEgYnVuY2ggb2YgdGV4dCBzYXlpbmcgbm90aGluZy4gQW5kIG5vLCBpdCdzIG5vdCBhIHZhbGlkIGtleS4=

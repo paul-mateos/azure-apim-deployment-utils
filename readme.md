@@ -541,10 +541,12 @@ $ docker run -it -v <config dir>:/apim donmartin76/azure-apim-deployment-utils e
 
 Use this functionality if you do not want to start from scratch creating configuration files. The script will create the following artefacts **inside the config dir**:
 
-* `properties_extracted.json`
-* `certificates_extracted.json`
-* `swaggerfiles_extracted.json`
-* A directory `local_swaggerfiles` containing the current API Swagger definitions in your APIm instance
+* `properties_extracted.json` (if `properties` or `all` was passed as one of the arguments)
+* `certificates_extracted.json` (if `certificates` or `all` was passed as one of the arguments)
+* `swaggerfiles_extracted.json` (if `swagger` or `all` was passed as one of the arguments)
+* A directory `local_swaggerfiles` containing the current API Swagger definitions in your APIm instance (if passing `swagger` or `all` as one of the arguments)
+
+You may also supply a combination of the three specific arguments, e.g. `properties swagger` to export properties and the Swagger files.
 
 You can use these files as starting points when creating your own generic configuration files. Please note the following things:
 
@@ -624,26 +626,6 @@ Things which are confusing:
 
 <a name="utilities"></a>
 ## Utility functions
-
-### Extracting Configuration files
-
-Using Python command line:
-```
-$ python apim_extract_config.py <config dir> <all|swagger|properties|certificates>
-```
-
-Using `docker`:
-```
-$ docker run -it -v <config dir>:/apim --env-file=<env list file> donmartin76/azure-apim-deployment-utils extract_config <all|swagger|properties|certificates>
-```
-
-Using this utility function will create starting points for your configuration files. Depending on which argument you choose, it will export your Swagger files and the `swaggerfiles.json` file as `swaggerfiles_extracted.json` (`swagger`), a template file for your certificates (use `certificates` to export `certificates_extracted.json`) or properties (use `properties` to extract a `properties_extracted.json` file). Using the argument `all` will produce all of the above files.
-
-You may also supply a combination of the three specific arguments, e.g. `properties swagger` to export properties and the Swagger files.
-
-##### Swagger File export
-
-In addition to the `swaggerfiles_extracted.json` file, the Swagger export will also export the actual Swagger files for the currently present APIs from the Azure APIm instance referenced in the `instances.json` file. These will be put inside the `local_swaggerfiles` sub directory; they will be referenced in the `swaggerfiles_extracted.json` accordingly as well. 
 
 <a name="admin_ui"></a>
 ### Opening Admin UI (without Azure Portal)
