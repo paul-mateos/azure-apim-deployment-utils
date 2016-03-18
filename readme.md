@@ -24,6 +24,7 @@ The documentation consists of two parts (and a planned one):
 * A more thorough documentation on how it works behind the scenes
 * **Later**: Source code documentation
 
+<a name="getting_started"></a>
 # Getting started
 
 In order to get started with the scripts, please first make sure you meet the [prerequisites](#prereqs). You can either [run the scripts using `docker`](#docker), or run them directly using your local Python interpreter. Using the docker image ensures that it will always work, disregarding of your operating system, so for running the scripts, docker is the recommended way.
@@ -138,9 +139,36 @@ Skipping Swagger update, could not find 'swaggerfiles.json'.
 
 Aha! So now we can change things from the command line. The last two lines also show you: Certificates and Swagger files can also be updated from the outside.
 
+For a detailed description on how these files work, see the corresponding sections:
+
+* [`certificates.json`](#certificates)
+* [`swaggerfiles.json`](#swaggerfiles)
+* [Updating an APIm instance](#apim_update)
+
+#### Next steps
+
+The next steps to do when working with the scripts can be the following:
+
+* Replace the values of your properties with [environment variables](#env_variables), so that you can change them from the outside, e.g. for targeting different APIm instances
+* Set up continuous integration of Swagger files from your backend service deployments, so that the Swagger definitions are automatically updated when the backend services have been deployed
+* Integrate the scripts into your build pipelines, so that you can use them to propagate configurations from one APIm instance (Dev) to others (Test, Prod).
+
 <a name="python"></a>
 ## Run locally using Python
 
+Using the Python interpreter locally works equally well, as long as the prerequisites are fulfilled. The above guide applies in the same way, with the following differences:
+
+Instead of doing a `docker ... extract_config`, in the directory containing the `.py` files, issue the following command:
+
+```
+C:\Projects\azure-apim-deployment-tools\> python.exe apim_extract_config.py <config dir> all
+```
+
+Likewise, the update command works in the same way:
+
+```
+C:\Projects\azure-apim-deployment-tools\> python.exe apim_update.py <config dir>
+```
 
 # Behind the scenes
 
@@ -358,7 +386,7 @@ A sample file can be found in the sample repository: [`certificates.json`](sampl
 }
 ```
 
-In this file, you can provide client certificates which are to be used for communicating with your backend services (mutual SSL). You may provide a list of JSON objects, each containing a (preferably fully qualified) filename (`fileName`) pointing to a PFX file, and the corresponding password (`password`).
+In this file, you can provide client certificates which are to be used for communicating with your backend services (mutual SSL). You may provide a list of JSON objects, each containing a relative path filename (`fileName`) pointing to a PFX file, and the corresponding password (`password`). In order to use this with the `docker` image, the file name must be relative to the location of the `certificates.json` file, residing **below** the file (you **cannot** use `..` to go up). In consequence, your build scripts must put the PFX files inside a sub directory of the *config dir* for the update mechanism to find them.
 
 This file is used in conjunction with the [`apim_update`](#apim_update) and [`apim_deploy`](#apim_deploy) scripts.
 
@@ -435,6 +463,10 @@ A sample file can be found in the sample repository: [`swaggerfiles.json`](sampl
 
 The `swaggerfiles.json` is used by the `apim_update` script to update a list of APIs using their Swagger definitions.
 
+The `swagger` properties must contain the relative path to the Swagger file to use for updating the API. The actual Swagger file must reside inside a sub directory of the *config dir* for the scripts to find them under all circumstances. This means your build scripts must put them there, if you do not decide to keep them in source control together with the script *config dir*. This is an option, but usually, your update build script would rather retrieve the Swagger files from a backend service drop location which is created at deployment of those backend services (that's the moment where the Swagger files are actually in effect).
+
+When working locally with the Python interpreter, the `swagger` properties may as well be fully qualified paths, but when using the dockerized scripts, the path is mandatorily relative, as the container only sees the *config dir* and not the entire host.
+
 This functionality is intended to be used after you have deployed your backend service to your Dev instances; the deployment scripts of your backend service (which in turn should supply the Swagger files) should trigger the `apim_update` script, which updates the API in your Dev APIm instance using the Swagger files.
 
 Due to the fact that Azure APIm does not let us specify the service URL (`serviceUrl`) of an API using properties, which in turn could be used to uniquely identify an API, using these scripts require us to workaround this a little:
@@ -497,6 +529,32 @@ A sample file can be found in the [sample config repository](sample-repo/docker_
 
 The following sections describe the operations which are supported out of the box by the scripts, in easily useful ways. For further support, it is quite simple to extend the scripts and/or add more scripts to support more things. Most other things which are not covered here are though already available using the PowerShell Cmdlets (link needed).
 
+## Extracting template script configuration files
+
+Using Python directly:
+```
+$ python apim_extract_config.py <config dir> <all|properties|certificates|swagger>
+```
+
+Using `docker`:
+```
+$ docker run -it -v <config dir>:/apim donmartin76/azure-apim-deployment-utils extract_config <all|properties|certificates|swagger>
+```
+
+Use this functionality if you do not want to start from scratch creating configuration files. The script will create the following artefacts **inside the config dir**:
+
+* `properties_extracted.json`
+* `certificates_extracted.json`
+* `swaggerfiles_extracted.json`
+* A directory `local_swaggerfiles` containing the current API Swagger definitions in your APIm instance
+
+You can use these files as starting points when creating your own generic configuration files. Please note the following things:
+
+* The properties contain clear text values; you will want to replace these with [environment variables](#env_variables)
+* The entries in the `certificates_extracted.json` file are only *placeholders*; it is not possible to extract neither certificates nor the corresponding passwords from the APIm instance, these have to come from your build scripts/local files/environment variables
+* The Swagger files which are extracted from the APIm instance *can* be used as a base for continued work, but usually you don't use these files (they're just for your information) but rather files which come from your backend service builds, where the Swagger files should serve as the service contract; they must be imported into APIm (the other way around) subsequently, automatically
+
+<a name="apim_update"></a>
 ## Updating an APIm instance
 
 Using Python directly:
@@ -513,9 +571,9 @@ The parameter `<config dir>` must point to directory containing configuration fi
 
 The `apim_update` script updates a (developer) instance of Azure API Management. The script will perform the following steps (in the given order):
 
-1. Properties are updated according to the [`properties.json`](#properties) configuration file.
-1. Certificates are updated according to the [`certificates.json`](#certificates) configuration file.
-1. API definitions are updated according to the [`swaggerfiles.json`](#swaggerfiles) configuration file.
+1. Properties are updated according to the [`properties.json`](#properties) configuration file (if present).
+1. Certificates are updated according to the [`certificates.json`](#certificates) configuration file (if present).
+1. API definitions are updated according to the [`swaggerfiles.json`](#swaggerfiles) configuration file (if present).
 
 Please note that this scripts uses only the REST API of the APIm instance to perform these updates.
 
@@ -539,6 +597,8 @@ Using `docker`:
 ```
 $ docker run -it -v <config dir>:/apim --env-file=<env list file> donmartin76/azure-apim-deployment-utils extract [target zip file]
 ```
+
+
 
 ## Deploying a configuration ZIP file (to a different APIm instance)
 
