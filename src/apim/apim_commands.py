@@ -104,22 +104,36 @@ def apim_extract(base_dir, target_zip):
     return True
 
 def apim_extract_properties(base_dir):
-    if not base_dir.endswith(os.sep):
-        base_dir = base_dir + os.sep
-        
-    print "Checking configuration..."
-    
     instance = "apim"
-
     apim = apim_core.create_azure_apim(base_dir)
     properties_file = os.path.join(base_dir, 'properties_extracted.json')
-    
-    print "Extracting properties to 'properties_extracted.json'"
     if not apim.extract_properties_to_file("apim", properties_file):
         print "Property extraction failed."
         return False
     print "Property extraction succeeded."
+    return True
     
+def apim_extract_certificates(base_dir):
+    instance = "apim"
+    apim = apim_core.create_azure_apim(base_dir)
+    certificates_file = os.path.join(base_dir, 'certificates_extracted.json')
+    if not apim.extract_certificates_to_file("apim", certificates_file):
+        print "Certificate extraction failed."
+        return False
+    print "Certificate extraction succeeded."
+    return True
+    
+def apim_extract_swaggerfiles(base_dir):
+    instance = "apim"
+    apim = apim_core.create_azure_apim(base_dir)
+    swaggerfiles_file = os.path.join(base_dir, 'swaggerfiles_extracted.json')
+    swaggerfiles_localdir = os.path.join(base_dir, 'local_swaggerfiles')
+    if not os.path.exists(swaggerfiles_localdir):
+        os.makedirs(swaggerfiles_localdir)
+    if not apim.extract_swaggerfiles_to_file("apim", swaggerfiles_file, 'local_swaggerfiles'):
+        print "Swaggerfiles extraction failed."
+        return False
+    print "Swagger files extraction succeeded."
     return True
 
 def apim_deploy(source_zip):

@@ -34,11 +34,11 @@ if [ "$1" = 'deploy' ]; then
     fi
 fi
 
-if [ "$1" = 'extract_properties' ]; then
-    echo "=========================================="
-    echo " EXTRACTING PROPERTIES FROM APIM INSTANCE"
-    echo "=========================================="
-    python apim_extract_properties.py /apim
+if [ "$1" = 'extract_config' ]; then
+    echo "======================================"
+    echo " EXTRACTING CONFIG FROM APIM INSTANCE"
+    echo "======================================"
+    python apim_extract_config.py /apim $2 $3 $4
 fi
 
 if [ "$1" = 'pkcs12_fingerprint' ]; then
@@ -47,5 +47,14 @@ if [ "$1" = 'pkcs12_fingerprint' ]; then
     else
         echo "Usage:"
         echo "  <docker> pkcs12_fingerprint <pfx_file> <password>"
+    fi
+fi
+
+if [ "$1" = 'token' ]; then
+    if [ ! -z "$2" ]; then
+        python token_factory.py /apim $2
+    else
+        echo "Usage:"
+        echo "  <docker> token <sas|git|adminurl>"
     fi
 fi

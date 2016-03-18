@@ -136,6 +136,31 @@ class AzureApim:
                 print "Found certificate with fingerprint '" + fingerprint + "'."
 
         return True
+        
+    def extract_certificates_to_file(self, instance, certificates_file):
+        sas_token = self._token_factory.get_sas_token(instance)
+        base_url = self._token_factory.get_base_url(instance)
+        api_version = self._token_factory.get_api_version()
+
+        cert_res = requests.get(base_url + 'certificates' + api_version,
+                                headers = {'Authorization': sas_token})
+        if 200 != cert_res.status_code:
+            print "Certificate extraction failed!"
+            print cert_res.text
+            return False
+            
+        cert_json = byteify(json.loads(cert_res.text))
+        certs_file_json = { 'certificates': [] }
+        cert_list = certs_file_json['certificates']
+        for cert in cert_json['value']:
+            cert_list.append({
+                'fileName': cert['subject'],
+                'password': cert['thumbprint']
+            })
+        with open (certificates_file, 'w') as outfile:
+            json.dump(certs_file_json, outfile, indent=4)
+            
+        return True
                 
     def __delete_certificate(self, base_url, sas_token, api_version, cid):
         cert_del_res = requests.delete(base_url + 'certificates/' + cid + api_version,
@@ -275,7 +300,60 @@ class AzureApim:
                 json.dump(swagger, outfile, indent=4)
                 
         return True
+
+    def extract_swaggerfiles_to_file(self, instance, swaggerfiles_file, swaggerfiles_dir):
+        sas_token = self._token_factory.get_sas_token(instance)
+        base_url = self._token_factory.get_base_url(instance)
+        api_version = self._token_factory.get_api_version()
+
+        apis_res = requests.get(base_url + 'apis' + api_version,
+                                headers = {'Authorization': sas_token})
+        if (200 != apis_res.status_code):
+            print "Could not retrieve APIs."
+            print apis_res.text
+            return False
             
+        swaggerfiles_json = {
+            'swaggerFiles': []
+        }
+        swaggerfiles_list = swaggerfiles_json['swaggerFiles']
+        apis_json = byteify(json.loads(apis_res.text))
+        for api_def in apis_json['value']:
+            api_url = api_def['id']
+            
+            swagger_res = requests.get(base_url + api_url[1:] + api_version + '&export=true', 
+                                       headers={'Authorization': sas_token,
+                                                'Accept': 'application/vnd.swagger.doc+json'})
+            if (200 != swagger_res.status_code):
+                print "Could not export Swagger definition."
+                print swagger_res.text
+                return False
+            
+            swagger = json.loads(swagger_res.text)
+            id_name = swagger['basePath'].replace('/', '_')
+            if (id_name.startswith('_')):
+                id_name = id_name[1:]
+
+            target_dir = self._base_config_dir
+            if swaggerfiles_dir:
+                target_dir = os.path.join(target_dir, swaggerfiles_dir)
+            target_file = id_name + '.json'
+            with open(os.path.join(target_dir, target_file), 'w') as outfile:
+                json.dump(swagger, outfile, indent=4)
+            
+            local_file_name = target_file
+            if swaggerfiles_dir:
+                local_file_name = os.path.join(swaggerfiles_dir, target_file)
+            
+            swaggerfiles_list.append({
+                'serviceUrl': api_def['serviceUrl'],
+                'swagger': local_file_name
+            })
+            
+        with open(swaggerfiles_file, 'w') as outfile:
+            json.dump(swaggerfiles_json, outfile, indent=4)
+        
+        return True
 
     def extract_properties(self, instance):
         sas_token = self._token_factory.get_sas_token(instance)

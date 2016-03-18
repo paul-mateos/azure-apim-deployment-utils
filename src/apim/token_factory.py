@@ -5,6 +5,8 @@ import datetime
 import requests
 import json
 import urllib
+import os
+import sys
 from utils import byteify, replace_env
 
 def create_token_factory_from_file(instances_file):
@@ -80,3 +82,42 @@ class TokenFactory:
 
     def get_api_version(self):
         return self.API_VERSION
+
+if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print "Usage:"
+        print "  python token_factory.py <config dir> [sas|git|adminurl]"
+        sys.exit(1)
+    
+    instances_json = os.path.join(sys.argv[1], 'instances.json')
+    if not os.path.isfile(instances_json):
+        print "Error: Could not find 'instances.json' in directory '" + sys.argv[1] + "'."
+        sys.exit(1)
+    
+    operation = ""
+    arg = ""
+    if len(sys.argv) >= 3:
+        arg = sys.argv[2]
+        if arg == "git":
+            operation = "git"
+        if arg == "adminurl":
+            operation = "adminurl"
+        if arg == "sas":
+            operation = "sas"
+    else:
+        operation = "sas"
+    
+    if operation == "":
+        print "Error: Unknown argument '" + arg + "'."
+        sys.exit(1)
+    
+    tf = create_token_factory_from_file(instances_json)
+    if operation == "sas":
+        print tf.get_sas_token("apim")
+    if operation == "git":
+        git_password = tf.get_scm_sas_token("apim")
+        print "git clone https://apim:" + git_password + "@" + tf.get_scm_url("apim")
+        
+    if operation == "adminurl":
+        print tf.get_admin_sso_link("apim")
+    sys.exit(0)

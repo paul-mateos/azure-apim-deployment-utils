@@ -28,10 +28,16 @@ The documentation consists of two parts (and a planned one):
 
 In order to get started with the scripts, please first make sure you meet the [prerequisites](#prereqs). You can either [run the scripts using `docker`](#docker), or run them directly using your local Python interpreter. Using the docker image ensures that it will always work, disregarding of your operating system, so for running the scripts, docker is the recommended way.
 
+## Preparing your configuration files
+
 <a name="docker"></a>
 ## Run using `docker`
 
 WIP.
+
+<a name="python"></a>
+## Run locally using Python
+
 
 # Behind the scenes
 
