@@ -598,19 +598,50 @@ Using `docker`:
 $ docker run -it -v <config dir>:/apim --env-file=<env list file> donmartin76/azure-apim-deployment-utils extract [target zip file]
 ```
 
+The command will create a ZIP file `<target zip file>`, or, in the `docker` case, the file `apim_extract.zip` inside the *config dir*. This configuration archive contains the following things:
 
+* The [config files](#config_file)
+* The complete `git` APIm repository, reflecting the APIm configuration (groups, policies, API definitions,...)
+
+This is intended to be a complete blueprint of an Azure APIm instance which can be used with the [deployment script](#apim_deploy) to deploy it to a different APIm instance.
+
+Please note the following things:
+
+* The ZIP archive does **NOT** contain
+    * Swagger files (only the `swaggerfiles.json`)
+    * Certificate files (only the `certificates.json`)
+* In order to be deployable to another APIm instance, the configuration files need to be parametrized using [environment variables](#env_variables)
 
 ## Deploying a configuration ZIP file (to a different APIm instance)
 
+Using Python command line:
 ```
 $ python apim_deploy.py <source config zip>
 ```
 
-(Works, needs to be described)
+Using `docker`:
+```
+$ docker run -it -v <path to zip file>:/apim --env-file=<path to docker_env.list> donmartin76/azure-apim-deployment-utils deploy <source config zip> 
+```
 
-Things which are confusing:
+Deploys a ZIP file which was extracted via ["Extract"](#apim_extract) to another (or the same) APIm instance. In this case, the *config dir* is extracted from the ZIP file, and the values are subsequently used from there. In the `docker` case, the `<source zip>` must be a file name inside the `<path to zip file>`. If you need certificates, these are also expected to lie as files beneath the `<path to zip file>`, e.g. like this:
 
-* The entire configuration is taken from the ZIP file, also the `instances.json`; normally you would parametrize this using environment variables, and via that be able to deploy to a different instance.
+* `D:\BuildFiles\`
+    * `apim_extract.zip`
+    * `local_certificates\` (directory)
+        * `cert1.pfx`
+        * `cert2.pfx`
+        * ...
+
+The content of the configuration files need to point to the certificate files accordingly; this is usually done by defining environment variables accordingly, or by standardizing the file names.
+
+This command deploys an Azure APIm configuration into an Azure APIm instance by doing the following steps:
+1. Extract the *config dir* files into a temporary directory
+2. Update properties in the target APIm instance
+3. Update certificates in the target APIm instance
+4. Deploy the `git` repository content from the archive ZIP using `git` to the target APIm instance
+
+**Please note** that the `swaggerfiles.json` is not used when deploying using this script. This is not needed, as the entire API definition is already contained within the `git` repository, which in turn is deployed. The `swaggerfiles.json` are only used for deploying new source Swagger file changes on the Dev instance!
 
 ##### Special case deleted 'loggers'
 
@@ -634,16 +665,40 @@ Things which are confusing:
 $ python apim_open_apim_ui.py <config dir> [<instance>]
 ```
 
-Opens a web browser pointing to the Admin Portal of your Azure API Management instance, without going via the Azure Classic Portal. Useful.
+Opens a web browser pointing to the Admin Portal of your Azure API Management instance, without going via the Azure Classic Portal.
+
+This does not make sense using `docker`, but you may use the [`token` command](#token) described below to achieve a similar effect if needed.
 
 ### Generate PFX/PKCS#12 Thumbprint from file
 
+Using Python command line:
 ```
 $ python apim_openssl.py <certificate.pfx> <password>
 ```
 
+Using `docker`:
+```
+$ docker run -it -v <path to zip file>:/apim --env-file=<path to docker_env.list> donmartin76/azure-apim-deployment-utils pkcs12_fingerprint <certificate.pfx> <password>
+```
+
 Outputs the PFX thumbprint of a certificate file; useful when scripting things. Use this in order to set environment variables which in turn can be used inside properties, e.g. when specifying which certificate should be used for mutual authentication scenarios.
 
+<a name="token"></a>
+### Generate various access tokens for debugging and developing
+
+Using Python command line:
+```
+$ python token_factory <config dir> <sas|git|adminurl>
+```
+
+Using `docker`:
+```
+$ docker run -it -v <path to zip file>:/apim --env-file=<path to docker_env.list> donmartin76/azure-apim-deployment-utils token <sas|git|adminurl>  
+```
+
+* `sas`: Generates a Shared Access Signature (SAS) for use in the `Authorization` header when calling the Azure APIm REST API, useful for testing and debugging the APIm REST API
+* `git`: Generates a git password for use with the Azure APIm `git` repository; actually, it will return an entire `git clone` command line you can just copy and paste
+* `adminurl`: Generates an URL you can copy and paste into a browser to open up the Admin UI of your Azure APIm instancea (this is also used in the [Opening Admin UI](#admin_ui) script)
 
 # Appendix
 
