@@ -28,14 +28,115 @@ The documentation consists of two parts (and a planned one):
 
 In order to get started with the scripts, please first make sure you meet the [prerequisites](#prereqs). You can either [run the scripts using `docker`](#docker), or run them directly using your local Python interpreter. Using the docker image ensures that it will always work, disregarding of your operating system, so for running the scripts, docker is the recommended way.
 
-## Preparing your configuration files
+**IMPORTANT**: When playing around with the scripts for the first time, always use a NON-PRODUCTION Azure APIm instance. This should be obvious though. Depending on what you do and try, the scripts will change your APIm configuration.
 
+In order to get most out of this little "getting started" guide, you should make sure that you Azure APIm instance has the following things:
 
+* Some property defined; you don't need to make use of it (yet), but having a property defined makes things easier to understand
+* An uploaded client certificate (optional) to show how they can be manipulated
+* At least one API definition of some kind
 
 <a name="docker"></a>
-## Run using `docker`
+## Getting started using `docker`
 
-WIP.
+Make sure you have a recent version of Docker installed before continuing. The scripts and docker image was tested using Docker 1.10.3, so having this version or newer will most probably work without problems. If you encounter problems, please file an issue here on GitHub.
+
+You can find the Docker Toolbox here: https://www.docker.com/products/docker-toolbox
+
+#### Create an `instances.json` file
+
+To get started, please create a new directory somewhere where you will put your configuration files. The first step is to create a new file called `instances.json` inside this newly created directory and fill in some data on the Azure APIm instance you want to work with.
+
+Start with the sample file: [`sample-repo/instances.json`](sample-repo/instances.json):
+
+```
+{
+    "apim": {
+        "id": "the REST API tenant ID",
+        "key": "The REST API Primary (or secondary) key",
+        "url": "https://<your-apim>.management.azure-api.net",
+        "scm": "<your-apim>.scm.azure-api.net",
+        "host": <your-apim>.azure-api.net"
+    }
+}
+```
+
+For a detailed discussion on these properties, see the [`instances.json` documentation below](#instances). Later on, you will most probably use environment variables to fill in these values, but for getting started, you should fill in these values directly into your `instances.json` file.
+
+#### Pull template configuration files from your APIm instance
+
+The directory you created above is what is - for these scripts - called the *configuration directory* (*config dir*). This directory is used for all (at least most) operations on Azure APIm to decide which APIm instances is communicated with, and what will happen to it.
+
+We will now create a one-off container from the base image and pass a command to it, which will extract some sample configuration files for us into that configuration directory. Start a "Docker Quickstart Terminal" if you haven't done that already, and issue the following command:
+
+```
+$ docker run -it -v <path to config dir>:/apim donmartin76/azure-apim-deployment-utils extract_config all
+```
+
+**Behind a proxy?** If you are behind a proxy server, you will have to tell the container that by extending the command line like this:
+
+```
+$ docker run -it -v <path to config dir>:/apim -e http_proxy=http://<your http proxy> -e https_proxy=https://<your https proxy> donmartin76/azure-apim-deployment-utils extract_config all
+```
+
+The `-it` command line switch tells Docker to run the container in the foreground, so that we see input and output from it. The `-v` switch maps a "volume" into the container, in this case we want to map the *config dir* into the container as the `/apim` directory inside the container. When using the dockerized scripts, this is always what you have to do to make the configuration known to the scripts. By using the `-e` switch, you may pass additional environment variables into the container, in this case to make the proxy servers known (if applicable).
+
+If everything runs as expected, you will see the following output:
+```
+$ docker run -it -v /Users/martind/Projects/tmp/apim2:/apim donmartin76/azure-apim-deployment-utils extract_config all
+======================================
+ EXTRACTING CONFIG FROM APIM INSTANCE
+======================================
+Property extraction succeeded.
+Certificate extraction succeeded.
+Swagger files extraction succeeded.
+```
+
+If you check your *config dir* now, you will notice the following things:
+
+* Three new files have appeared:
+  * `properties_extracted.json`
+  * `certiticates_extracted.json`
+  * `swaggerfiles_extracted.json`
+* A new directory `local_swaggerfiles` has been created, containing one `json` Swagger file per API you have defined in your APIm instance.
+
+#### Pushing a changed property
+
+Now rename the `properties_extracted.json` file to `properties.json`. This means we declare it as *the real thing*, these are the properties we want to keep updated in our APIm instances. Open up the json file with your favorite editor and change value in it (you'll know what you can change in order not to destroy something).
+
+Example content of the file:
+```
+{
+    "SuperValue": {
+        "secret": false, 
+        "value": "This is a jolly fine property.", 
+        "tags": [
+            "sometag"
+        ]
+    }
+}
+```
+
+Now we can push that change back up to your APIm instance again:
+```
+$ docker run -it -v <path to config dir>:/apim donmartin76/azure-apim-deployment-utils update
+```
+
+If everything goes well, you will get an output similar to this:
+```
+$ docker run -it -v /Users/martind/Projects/tmp/apim2:/apim -e http_proxy=http://10.12.1.236:8083 -e https_proxy=https://10.12.1.236:8083 donmartin76/azure-apim-deployment-utils update
+========================
+ UPDATING APIM INSTANCE
+========================
+Checking configuration...
+Updating 'SuperValue'
+Successfully updated property 'SuperValue' (id 56e03a98c8be1f0cb85a071c).
+Update of properties succeeded.
+Skipping certificates, could not find 'certificates.json'.
+Skipping Swagger update, could not find 'swaggerfiles.json'.
+```
+
+Aha! So now we can change things from the command line. The last two lines also show you: Certificates and Swagger files can also be updated from the outside.
 
 <a name="python"></a>
 ## Run locally using Python
@@ -459,16 +560,32 @@ Things which are confusing:
 
 ... can't be removed in the same step as they are removed from the policies. Two-step deployment needed.
 
+##### Special case deleted certificates
+
+... can't be removed in the same step as they are removed from the policies. Two-step deployment needed.
+
 <a name="utilities"></a>
 ## Utility functions
 
-### Extracting Properties
+### Extracting Configuration files
 
+Using Python command line:
 ```
-$ python apim_extract_properties.py <config dir>
+$ python apim_extract_config.py <config dir> <all|swagger|properties|certificates>
 ```
 
-Creates `properties_extracted.json` into the *config dir*. Use this file to create your configuration file if you want.
+Using `docker`:
+```
+$ docker run -it -v <config dir>:/apim --env-file=<env list file> donmartin76/azure-apim-deployment-utils extract_config <all|swagger|properties|certificates>
+```
+
+Using this utility function will create starting points for your configuration files. Depending on which argument you choose, it will export your Swagger files and the `swaggerfiles.json` file as `swaggerfiles_extracted.json` (`swagger`), a template file for your certificates (use `certificates` to export `certificates_extracted.json`) or properties (use `properties` to extract a `properties_extracted.json` file). Using the argument `all` will produce all of the above files.
+
+You may also supply a combination of the three specific arguments, e.g. `properties swagger` to export properties and the Swagger files.
+
+##### Swagger File export
+
+In addition to the `swaggerfiles_extracted.json` file, the Swagger export will also export the actual Swagger files for the currently present APIs from the Azure APIm instance referenced in the `instances.json` file. These will be put inside the `local_swaggerfiles` sub directory; they will be referenced in the `swaggerfiles_extracted.json` accordingly as well. 
 
 <a name="admin_ui"></a>
 ### Opening Admin UI (without Azure Portal)
