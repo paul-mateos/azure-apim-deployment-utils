@@ -60,7 +60,8 @@ def apim_extract(base_dir, target_zip):
         'instances.json',
         'properties.json',
         'certificates.json',
-        'swaggerfiles.json'
+        'swaggerfiles.json',
+        'docker_env.list'
     ]
 
     instance = "apim"

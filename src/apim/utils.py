@@ -32,5 +32,11 @@ def resolve_file(file_name, base_dir):
     joint = os.path.join(base_dir, file_name)
     if (os.path.isfile(joint)):
         return joint
-        
+
+    # Docker scenario
+    if (os.path.exists('/apim')):
+        joint = os.path.join('/apim', file_name)
+        if (os.path.isfile(joint))
+            return joint
+    
     raise Exception("File not found: " + file_name)
