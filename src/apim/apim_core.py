@@ -64,9 +64,10 @@ class AzureApim:
             time.sleep(5)
             status_req = requests.get(location, headers={'Authorization': sas_token})
         
-            if (200 != status_req.status_code):
+            if (status_req.status_code > 299):
                 print "Fetching the status of the process failed:"
                 print status_req.text
+                print "Status Code: " + str(status_req.status_code)
                 
                 return False
         

@@ -60,7 +60,10 @@ class TokenFactory:
         return sso_json['value']
 
     def get_base_url(self, instance):
-        return self._instances[instance]["url"]
+        check_url = self._instances[instance]["url"]
+        if (check_url.endswith('/')):
+            return check_url
+        return check_url + '/'
         
     def get_host(self, instance):
         return self._instances[instance]["host"]
