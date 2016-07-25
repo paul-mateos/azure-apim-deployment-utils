@@ -69,13 +69,13 @@ The directory you created above is what is - for these scripts - called the *con
 We will now create a one-off container from the base image and pass a command to it, which will extract some sample configuration files for us into that configuration directory. Start a "Docker Quickstart Terminal" if you haven't done that already, and issue the following command:
 
 ```
-$ docker run -it --rm -v <path to config dir>:/apim donmartin76/azure-apim-deployment-utils extract_config all
+$ docker run -it --rm -v <path to config dir>:/apim haufelexware/azure-apim-deployment-utils extract_config all
 ```
 
 **Behind a proxy?** If you are behind a proxy server, you will have to tell the container that by extending the command line like this:
 
 ```
-$ docker run -it --rm -v <path to config dir>:/apim -e http_proxy=http://<your http proxy> -e https_proxy=https://<your https proxy> donmartin76/azure-apim-deployment-utils extract_config all
+$ docker run -it --rm -v <path to config dir>:/apim -e http_proxy=http://<your http proxy> -e https_proxy=https://<your https proxy> haufelexware/azure-apim-deployment-utils extract_config all
 ```
 
 The `-it` command line switch tells Docker to run the container in the foreground, so that we see input and output from it. The `-v` switch maps a "volume" into the container, in this case we want to map the *config dir* into the container as the `/apim` directory inside the container. When using the dockerized scripts, this is always what you have to do to make the configuration known to the scripts. By using the `-e` switch, you may pass additional environment variables into the container, in this case to make the proxy servers known (if applicable).
@@ -84,7 +84,7 @@ Lastly, the `--rm` switch will clean up the container after use; we're only usin
 
 If everything runs as expected, you will see the following output:
 ```
-$ docker run -it -v /Users/martind/Projects/tmp/apim2:/apim donmartin76/azure-apim-deployment-utils extract_config all
+$ docker run -it -v /Users/martind/Projects/tmp/apim2:/apim haufelexware/azure-apim-deployment-utils extract_config all
 ======================================
  EXTRACTING CONFIG FROM APIM INSTANCE
 ======================================
@@ -120,12 +120,12 @@ Example content of the file:
 
 Now we can push that change back up to your APIm instance again:
 ```
-$ docker run -it --rm -v <path to config dir>:/apim donmartin76/azure-apim-deployment-utils update
+$ docker run -it --rm -v <path to config dir>:/apim haufelexware/azure-apim-deployment-utils update
 ```
 
 If everything goes well, you will get an output similar to this:
 ```
-$ docker run -it --rm -v /Users/martind/Projects/tmp/apim2:/apim donmartin76/azure-apim-deployment-utils update
+$ docker run -it --rm -v /Users/martind/Projects/tmp/apim2:/apim haufelexware/azure-apim-deployment-utils update
 ========================
  UPDATING APIM INSTANCE
 ========================
@@ -538,7 +538,7 @@ $ python apim_extract_config.py <config dir> <all|properties|certificates|swagge
 
 Using `docker`:
 ```
-$ docker run -it --rm -v <config dir>:/apim donmartin76/azure-apim-deployment-utils extract_config <all|properties|certificates|swagger>
+$ docker run -it --rm -v <config dir>:/apim haufelexware/azure-apim-deployment-utils extract_config <all|properties|certificates|swagger>
 ```
 
 Use this functionality if you do not want to start from scratch creating configuration files. The script will create the following artefacts **inside the config dir**:
@@ -566,7 +566,7 @@ $ python apim_update.py <config dir>
 
 Using `docker`:
 ```
-$ docker run -it --rm -v <config dir>:/apim --env-file=<env list file> donmartin76/azure-apim-deployment-utils update
+$ docker run -it --rm -v <config dir>:/apim --env-file=<env list file> haufelexware/azure-apim-deployment-utils update
 ```
 
 The parameter `<config dir>` must point to directory containing configuration files as described in the [above sections](#config_file).
@@ -597,7 +597,7 @@ $ python apim_extract.py <config dir> <target zip file>
 
 Using `docker`:
 ```
-$ docker run -it --rm -v <config dir>:/apim --env-file=<env list file> donmartin76/azure-apim-deployment-utils extract [target zip file]
+$ docker run -it --rm -v <config dir>:/apim --env-file=<env list file> haufelexware/azure-apim-deployment-utils extract [target zip file]
 ```
 
 The command will create a ZIP file `<target zip file>`, or, in the `docker` case, the file `apim_extract.zip` inside the *config dir*. This configuration archive contains the following things:
@@ -623,7 +623,7 @@ $ python apim_deploy.py <source config zip>
 
 Using `docker`:
 ```
-$ docker run -it --rm -v <path to zip file>:/apim --env-file=<path to docker_env.list> donmartin76/azure-apim-deployment-utils deploy <source config zip> 
+$ docker run -it --rm -v <path to zip file>:/apim --env-file=<path to docker_env.list> haufelexware/azure-apim-deployment-utils deploy <source config zip> 
 ```
 
 Deploys a ZIP file which was extracted via ["Extract"](#apim_extract) to another (or the same) APIm instance. In this case, the *config dir* is extracted from the ZIP file, and the values are subsequently used from there. In the `docker` case, the `<source zip>` must be a file name inside the `<path to zip file>`. If you need certificates, these are also expected to lie as files beneath the `<path to zip file>`, e.g. like this:
@@ -680,7 +680,7 @@ $ python apim_openssl.py <certificate.pfx> <password>
 
 Using `docker`:
 ```
-$ docker run -it --rm -v <path to zip file>:/apim --env-file=<path to docker_env.list> donmartin76/azure-apim-deployment-utils pkcs12_fingerprint <certificate.pfx> <password>
+$ docker run -it --rm -v <path to zip file>:/apim --env-file=<path to docker_env.list> haufelexware/azure-apim-deployment-utils pkcs12_fingerprint <certificate.pfx> <password>
 ```
 
 Outputs the PFX thumbprint of a certificate file; useful when scripting things. Use this in order to set environment variables which in turn can be used inside properties, e.g. when specifying which certificate should be used for mutual authentication scenarios.
@@ -695,7 +695,7 @@ $ python token_factory <config dir> <sas|git|adminurl>
 
 Using `docker`:
 ```
-$ docker run -it --rm -v <path to zip file>:/apim --env-file=<path to docker_env.list> donmartin76/azure-apim-deployment-utils token <sas|git|adminurl>  
+$ docker run -it --rm -v <path to zip file>:/apim --env-file=<path to docker_env.list> haufelexware/azure-apim-deployment-utils token <sas|git|adminurl>  
 ```
 
 * `sas`: Generates a Shared Access Signature (SAS) for use in the `Authorization` header when calling the Azure APIm REST API, useful for testing and debugging the APIm REST API
