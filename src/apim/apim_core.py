@@ -81,7 +81,11 @@ class AzureApim:
             if (statusString == "Succeeded"):
                 ready = True
                 break
-            print "Unexpected status string: '" + statusString + "'. Exiting."
+            if (statusString == "Failed"):
+                print "Operation failed! See status text for more information:"
+            else:
+                print "Unexpected status string: '" + statusString + "'. Exiting."
+            print status_req.text
             return False
         return True
 
