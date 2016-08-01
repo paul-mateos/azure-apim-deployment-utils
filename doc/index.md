@@ -176,7 +176,7 @@ C:\Projects\azure-apim-deployment-utils\> python.exe apim_update.py <config dir>
 
 This is the principal idea how the scripts are intended to work:
 
-![Deployment Paths](doc/deployment_path.png)
+![Deployment Paths](deployment_path.png)
 
 In this picture you see three (point being: two or more) different instances of API Management which reflect the different stages of development of your API Management solution. In the documentation I will assume you have a three stage landscape (Dev, Test/Stage and Prod), but it is not limited to that. It does though only make sense to use the scripts if you are using more than one instance of Azure API Management instances, like this:
 
@@ -476,7 +476,7 @@ Due to the fact that Azure APIm does not let us specify the service URL (`servic
 
 **Example**: APIs should be configured in such a way that the "Web Service URL" contains a URI-type identifier which - on a meta level - describes the service which lies behind the API:
 
-![Using the serviceUrl as a unique identifier](doc/api_service_url.png)
+![Using the serviceUrl as a unique identifier](api_service_url.png)
 
 A naming schema for this may for example be: `https://<version>.<service name>.<yourcompany>.<tld>`, such as here `https://v1.service.contoso.com`. This is obviously a **fictional** URL which does not actually lead to the backend service. The backend URL is instead stored in a [suitable property](#properties) and used in a [`<set-backend-url>` policy](#service_url)
 
