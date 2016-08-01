@@ -2,4 +2,4 @@
 
 See documentation at [Read the Docs](http://azure-api-management-deployment-utils.readthedocs.io/en/latest/).
 
-[Or directly from here](doc/readme.md).
+[Or directly from here](doc/index.md).
