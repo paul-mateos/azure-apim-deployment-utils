@@ -1,0 +1,143 @@
+{
+    "info": {
+        "version": "1.0", 
+        "title": "Echo API"
+    }, 
+    "paths": {
+        "/resource-cached": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                }, 
+                "description": "A demonstration of a GET call with caching enabled on the same \"echo\" backend as above. Cache TTL is set to 1 hour. When you make the first request the headers you supplied will be cached. Subsequent calls will return the same headers as the first time even if you change them in your request.", 
+                "parameters": [
+                    {
+                        "enum": [
+                            "sample"
+                        ], 
+                        "description": "A sample parameter that is required and has a default value of \"sample\".", 
+                        "default": "sample", 
+                        "required": true, 
+                        "in": "query", 
+                        "type": "string", 
+                        "name": "param1"
+                    }, 
+                    {
+                        "description": "Another sample parameter, set to not required.", 
+                        "type": "string", 
+                        "name": "param2", 
+                        "in": "query"
+                    }
+                ], 
+                "operationId": "Retrieve resource (cached)"
+            }
+        }, 
+        "/resource": {
+            "put": {
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                }, 
+                "description": "A demonstration of a PUT call handled by the same \"echo\" backend as above. You can now specify a request body in addition to headers and it will be returned as well.", 
+                "operationId": "Modify Resource"
+            }, 
+            "post": {
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                }, 
+                "consumes": [
+                    "application/json"
+                ], 
+                "description": "A demonstration of a POST call based on the echo backend above. The request body is expected to contain JSON-formatted data (see example below). A policy is used to automatically transform any request sent in JSON directly to XML. In a real-world scenario this could be used to enable modern clients to speak to a legacy backend.", 
+                "parameters": [
+                    {
+                        "schema": {
+                            "example": "{\r\n\t\"vehicleType\": \"train\",\r\n\t\"maxSpeed\": 125,\r\n\t\"avgSpeed\": 90,\r\n\t\"speedUnit\": \"mph\"\r\n}"
+                        }, 
+                        "name": "body", 
+                        "in": "body"
+                    }
+                ], 
+                "operationId": "Create resource"
+            }, 
+            "delete": {
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                }, 
+                "description": "A demonstration of a DELETE call which traditionally deletes the resource. It is based on the same \"echo\" backend as in all other operations so nothing is actually deleted.", 
+                "operationId": "Remove resource"
+            }, 
+            "head": {
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                }, 
+                "description": "The HEAD operation returns only headers. In this demonstration a policy is used to set additional headers when the response is returned and to enable JSONP.", 
+                "operationId": "Retrieve header only"
+            }, 
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "Returned in all cases."
+                    }
+                }, 
+                "description": "A demonstration of a GET call on a sample resource. It is handled by an \"echo\" backend which returns a response equal to the request (the supplied headers and body are being returned as received).", 
+                "parameters": [
+                    {
+                        "enum": [
+                            "sample"
+                        ], 
+                        "description": "A sample parameter that is required and has a default value of \"sample\".", 
+                        "default": "sample", 
+                        "required": true, 
+                        "in": "query", 
+                        "type": "string", 
+                        "name": "param1"
+                    }, 
+                    {
+                        "description": "Another sample parameter, set to not required.", 
+                        "type": "number", 
+                        "name": "param2", 
+                        "in": "query"
+                    }
+                ], 
+                "operationId": "Retrieve resource"
+            }
+        }
+    }, 
+    "schemes": [
+        "https"
+    ], 
+    "tags": [], 
+    "basePath": "/echo", 
+    "securityDefinitions": {
+        "apiKeyQuery": {
+            "type": "apiKey", 
+            "name": "subscription-key", 
+            "in": "query"
+        }, 
+        "apiKeyHeader": {
+            "type": "apiKey", 
+            "name": "Ocp-Apim-Subscription-Key", 
+            "in": "header"
+        }
+    }, 
+    "host": "crownapim.azure-api.net", 
+    "security": [
+        {
+            "apiKeyHeader": []
+        }, 
+        {
+            "apiKeyQuery": []
+        }
+    ], 
+    "swagger": "2.0"
+}

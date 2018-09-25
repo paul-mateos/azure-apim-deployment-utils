@@ -1,9 +1,9 @@
 {
     "apim": {
-        "id": "$APIM_ID",
-        "key": "$APIM_PRIMARY_KEY",
-        "url": "$APIM_MGMT_URL",
-        "scm": "$APIM_SCM_HOST",
-        "host": "$APIM_GATEWAY_HOST"
+        "id": "integration",
+        "key": "WI61EfL5pbtbc4gRUPL+mxyjaHxfIntlCjPLehQaHevn5DOihOJlBSPRhVVL2+EMCdz9CR4Omf3RSlrqlJBlVQ==",
+        "url": "https://crownapim.management.azure-api.net",
+        "scm": "https://crownapim.scm.azure-api.net",
+        "host": "https://crownapim.azure-api.net"
     }
 }

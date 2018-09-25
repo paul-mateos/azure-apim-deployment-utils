@@ -1,23 +1,9 @@
 {
-    "BackendServiceUrl1": {
+    "SuperValue": {
         "secret": false, 
-        "value": "$APIM_BACKEND_1", 
+        "value": "This is a jolly fine property.", 
         "tags": [
             "sometag"
-        ]
-    }, 
-    "BackendServiceUrl2": {
-        "secret": false, 
-        "value": "$APIM_BACKEND_2", 
-        "tags": [
-            "othertag"
-        ]
-    },
-    "BackendClientCert": {
-        "secret": true,
-        "value": "$APIM_CERT_THUMBPRINT",
-        "tags": [
-            "certificate"
         ]
     }
 }

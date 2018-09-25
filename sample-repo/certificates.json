@@ -1,8 +1,0 @@
-{
-    "certificates": [
-        {
-            "fileName": "$APIM_CLIENT_CERT_PFX",
-            "password": "$APIM_CLIENT_CERT_PASSWORD"
-        }
-    ]
-}

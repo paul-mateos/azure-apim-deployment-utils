@@ -1,0 +1,8 @@
+{
+    "swaggerFiles": [
+        {
+            "swagger": "local_swaggerfiles/echo.json", 
+            "serviceUrl": "http://echoapi.cloudapp.net/api"
+        }
+    ]
+}
